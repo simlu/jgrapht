@@ -96,6 +96,7 @@ class Node {
      * An edge, which is incident to this node and currently belongs to the matching
      */
     Edge matched;
+    Edge bestEdge;
 
     /**
      * Reference to the tree this node belongs to

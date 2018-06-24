@@ -131,13 +131,54 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
         return matching;
     }
 
+    /**
+     * Initializes an auxiliary graph by adding tree edges between trees and adding (+, +) cross-tree edges
+     * and (+, inf) edges to the appropriate heaps
+     */
+    private void initAuxiliaryGraph() {
+        Node opposite;
+        Tree tree;
+        Edge edge;
+        TreeEdge treeEdge;
+        // go through all tree roots and visit all incident edges of those roots.
+        // if a (+, inf) edge is encountered => add it to the infinity heap
+        // if a (+, +) edge is encountered and the opposite node hasn't been processed yet =>
+        // add this edge to the heap of (+, +) cross-tree edges
+        for (Node root = state.nodes[state.nodeNum].treeSiblingNext; root != null; root = root.treeSiblingNext) {
+            tree = root.tree;
+            for (Node.IncidentEdgeIterator edgeIterator = root.incidentEdgesIterator(); edgeIterator.hasNext(); ) {
+                edge = edgeIterator.next();
+                opposite = edge.head[edgeIterator.getDir()];
+                if (opposite.isInfinityNode()) {
+                    tree.addPlusInfinityEdge(edge, edge.slack);
+                } else if (!opposite.isProcessed) {
+                    if (opposite.tree.currentEdge == null) {
+                        State.addTreeEdge(tree, opposite.tree);
+                    }
+                    opposite.tree.currentEdge.addPlusPlusEdge(edge, edge.slack);
+                }
+            }
+            root.isProcessed = true;
+            for (Tree.TreeEdgeIterator treeEdgeIterator = tree.treeEdgeIterator(); treeEdgeIterator.hasNext(); ) {
+                treeEdge = treeEdgeIterator.next();
+                treeEdge.head[treeEdgeIterator.getCurrentDirection()].currentEdge = null;
+            }
+        }
+        // clearing isProcessed flags
+        for (Node root = state.nodes[state.nodeNum].treeSiblingNext; root != null; root = root.treeSiblingNext) {
+            root.isProcessed = false;
+        }
+    }
+
     private void solve() {
         Initializer<V, E> initializer = new Initializer<>(graph);
         this.state = initializer.initialize(options);
         this.primalUpdater = new PrimalUpdater<>(state);
         this.dualUpdater = new DualUpdater<>(state, primalUpdater);
-        if (DEBUG)
+        initAuxiliaryGraph();
+        if (DEBUG){
             printMap();
+        }
 
         Node currentRoot;
         Node nextRoot;

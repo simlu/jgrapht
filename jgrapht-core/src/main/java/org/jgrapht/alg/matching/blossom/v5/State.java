@@ -270,7 +270,7 @@ class State<V, E> {
      * <b>Note:</b> this iterator must return the blossom root in the first branch, i.e. when the
      * direction if 0. This feature is needed to setup the blossomSibling references correctly
      */
-    public class BlossomNodesIterator implements Iterator<Node> {
+    public static class BlossomNodesIterator implements Iterator<Node> {
         /**
          * Blossom's root
          */

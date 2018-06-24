@@ -183,7 +183,7 @@ class Tree {
      * @return new TreeNodeIterator for this tree
      */
     public TreeNodeIterator treeNodeIterator() {
-        return new TreeNodeIterator();
+        return new TreeNodeIterator(root);
     }
 
     /**
@@ -193,6 +193,75 @@ class Tree {
      */
     public TreeEdgeIterator treeEdgeIterator() {
         return new TreeEdgeIterator();
+    }
+
+    /**
+     * An iterator over tree nodes
+     */
+    public static class TreeNodeIterator implements Iterator<Node> {
+        /**
+         * The node this iterator is currently on
+         */
+        private Node currentNode;
+        /**
+         * Support variable to determine whether {@code currentNode} has been returned or not
+         */
+        private Node current;
+        /**
+         * Stores next tree root with respect to the root of this tree
+         */
+        private Node treeRoot;
+
+        /**
+         * Constructs a new TreeNodeIterator for a {@code root}
+         *
+         * @param root
+         */
+        public TreeNodeIterator(Node root) {
+            this.currentNode = this.current = root;
+            this.treeRoot = root;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (current != null) {
+                return true;
+            }
+            current = advance();
+            return current != null;
+        }
+
+        @Override
+        public Node next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            Node result = current;
+            current = null;
+            return result;
+        }
+
+        /**
+         * Advances the iterator to the next tree node
+         *
+         * @return the next tree node
+         */
+        private Node advance() {
+            if (currentNode == null) {
+                return null;
+            } else if (currentNode.firstTreeChild != null) {
+                // advance deeper
+                return currentNode = currentNode.firstTreeChild;
+            } else {
+                // advance to the next unvisited sibling of the current node or
+                // of some of its ancestors
+                while (currentNode != treeRoot && currentNode.treeSiblingNext == null) {
+                    currentNode = currentNode.parentEdge.getOpposite(currentNode);
+                }
+                currentNode = currentNode.treeSiblingNext;
+                return currentNode == treeRoot.treeSiblingNext ? currentNode = null : currentNode;
+            }
+        }
     }
 
     /**
@@ -270,73 +339,6 @@ class Tree {
                     currentEdge = first[1];
                 }
                 return currentEdge;
-            }
-        }
-    }
-
-    /**
-     * An iterator over tree nodes
-     */
-    public class TreeNodeIterator implements Iterator<Node> {
-        /**
-         * The node this iterator is currently on
-         */
-        private Node currentNode;
-        /**
-         * Support variable to determine whether {@code currentNode} has been returned or not
-         */
-        private Node current;
-        /**
-         * Stores next tree root with respect to the root of this tree
-         */
-        private Node stop;
-
-        /**
-         * Constructs a new TreeNodeIterator
-         */
-        public TreeNodeIterator() {
-            this.currentNode = this.current = root;
-            this.stop = root.treeSiblingNext;
-        }
-
-        @Override
-        public boolean hasNext() {
-            if (current != null) {
-                return true;
-            }
-            current = advance();
-            return current != null;
-        }
-
-        @Override
-        public Node next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            Node result = current;
-            current = null;
-            return result;
-        }
-
-        /**
-         * Advances the iterator to the next tree node
-         *
-         * @return the next tree node
-         */
-        private Node advance() {
-            if (currentNode == null) {
-                return null;
-            } else if (currentNode.firstTreeChild != null) {
-                // advance deeper
-                return currentNode = currentNode.firstTreeChild;
-            } else {
-                // advance to the next unvisited sibling of the current node or
-                // of some of its ancestors
-                while (currentNode != root && currentNode.treeSiblingNext == null) {
-                    currentNode = currentNode.parentEdge.getOpposite(currentNode);
-                }
-                currentNode = currentNode.treeSiblingNext;
-                return currentNode == stop ? currentNode = null : currentNode;
             }
         }
     }

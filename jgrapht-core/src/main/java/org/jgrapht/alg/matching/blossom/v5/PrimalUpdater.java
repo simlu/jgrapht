@@ -719,8 +719,7 @@ class PrimalUpdater<V, E> {
         Node minusNode = plusNode.getTreeParent();
         while (minusNode != null) {
             plusNode.matched = matchedEdge;
-            matchedEdge = minusNode.parentEdge;
-            minusNode.matched = matchedEdge;
+            minusNode.matched = matchedEdge = minusNode.parentEdge;
             plusNode = minusNode.getTreeParent();
             minusNode = plusNode.getTreeParent();
         }
