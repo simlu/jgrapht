@@ -24,6 +24,8 @@ import org.jgrapht.util.FibonacciHeapNode;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jgrapht.alg.matching.blossom.v5.Initializer.Action.*;
+import static org.jgrapht.alg.matching.blossom.v5.KolmogorovMinimumWeightPerfectMatching.DEBUG;
 import static org.jgrapht.alg.matching.blossom.v5.KolmogorovMinimumWeightPerfectMatching.INFINITY;
 import static org.jgrapht.alg.matching.blossom.v5.Node.Label.MINUS;
 import static org.jgrapht.alg.matching.blossom.v5.Node.Label.PLUS;
@@ -69,6 +71,7 @@ class Initializer<V, E> {
      * to the resulting state object
      */
     private Map<E, Edge> edgeMap;
+    private State<V, E> state;// TODO remove
 
     /**
      * Creates a new Initializer instance
@@ -118,6 +121,7 @@ class Initializer<V, E> {
         initGraph();
         initGreedy();
         allocateTrees();
+        state = new State<>(graph, nodes, edges, nodeNum, edgeNum, 0, vertexMap, edgeMap, options);
         int treeNum = initFractional();
         return new State<>(graph, nodes, edges, nodeNum, edgeNum, treeNum, vertexMap, edgeMap, options);
     }
@@ -298,14 +302,21 @@ class Initializer<V, E> {
     private int initFractional() {
         Node root;
         Node root2;
-        Node root3;
+        Node root3 = null;
         Node varNode;
-        Node oppositeNode;
+        int varDir;
         Edge varEdge;
-        int dir;
-        boolean shrink = false;
-        Tree dummyTree = new Tree();
+        Node oppositeNode;
+        Node.IncidentEdgeIterator iterator;
 
+        if (DEBUG) {
+            state.printMap();
+            state.printState();
+        }
+        /*
+         * For every free node u, which is adjacent to at least one "+" node in the current tree, we keep track
+         * of an edge, that has minimum slack and connects node u and some "+" node in the current tree.
+         */
         FibonacciHeap<Edge> fibHeap = new FibonacciHeap<>();
 
         for (root = nodes[nodeNum].treeSiblingNext; root != null; ) {
@@ -313,33 +324,50 @@ class Initializer<V, E> {
             if (root2 != null) {
                 root3 = root2.treeSiblingNext;
             }
-            root.tree = dummyTree;
             varNode = root;
 
             fibHeap.clear();
 
             double eps = 0;
+            Action flag = NONE;
+            Node branchRoot = varNode;
             Edge criticalEdge = null;
             double criticalEps = INFINITY;
-            Stat flag = Stat.NONE;
-            Node branchRoot = varNode;
+            int criticalDir = -1;
+            boolean primalOperation = false;
 
+            /*
+             * Growing a tree while is it possible. Main goal is to apply a primal operation. Therefore,
+             * If we encounter a tight (+, +) cross-tree or in-tree edge => we won't be able to increase
+             * dual objective function anymore (can't increase eps of the current tree)
+             * => we go out of the loop, apply lazy dual changes to the current branch and perform an
+             * augment or shrink operation.
+             *
+             * Tree is been growing in phases. Each phase starts with a new "branch" the reason to
+             * start a new branch is that the tree can't be grown any further and there no primal opetation
+             * can be applied. Therefore, we choose an edge of minimum slack from fibHeap, set the eps of the branch
+             * so that this edge becomes tight
+             */
             while (true) {
                 varNode.isProcessed = true;
                 varNode.dual -= eps; // applying lazy delta spreading
 
                 if (!varNode.isTreeRoot) {
+                    // applying lazy delta spreading to the matched "-" node
                     varNode.matched.getOpposite(varNode).dual += eps;
                 }
 
-                for (Node.IncidentEdgeIterator iterator = varNode.incidentEdgesIterator(); iterator.hasNext(); ) {
+                /*
+                 * Processing edges incident to the current node.
+                 */
+                for (iterator = varNode.incidentEdgesIterator(); iterator.hasNext(); ) {
                     varEdge = iterator.next();
-                    dir = iterator.getDir();
+                    varDir = iterator.getDir();
 
                     varEdge.slack += eps; // applying lazy delta spreading
-                    oppositeNode = varEdge.head[dir];
+                    oppositeNode = varEdge.head[varDir];
 
-                    if (oppositeNode.tree == dummyTree) {
+                    if (oppositeNode.tree == root.tree) {
                         // opposite node is in the same tree
                         if (oppositeNode.isPlusNode()) {
                             double slack = varEdge.slack;
@@ -347,11 +375,13 @@ class Initializer<V, E> {
                                 slack += eps;
                             }
                             if (2 * criticalEps > slack || criticalEdge == null) {
-                                shrink = true;
+                                flag = Action.SHRINK;
                                 criticalEps = slack / 2;
                                 criticalEdge = varEdge;
+                                criticalDir = varDir;
                                 if (criticalEps <= eps) {
-                                    // found a tight (+, +) in-tree edge to shrink
+                                    // found a tight (+, +) in-tree edge to shrink => go out of the loop
+                                    primalOperation = true;
                                     break;
                                 }
                             }
@@ -360,55 +390,108 @@ class Initializer<V, E> {
                     } else if (oppositeNode.isPlusNode()) {
                         // varEdge is a (+, +) cross-tree edge
                         if (criticalEps >= varEdge.slack || criticalEdge == null) {
-                            shrink = false;
+                            //
+                            flag = AUGMENT;
                             criticalEps = varEdge.slack;
                             criticalEdge = varEdge;
+                            criticalDir = varDir;
                             if (criticalEps <= eps) {
                                 // found a tight (+, +) cross-tree edge to augment
+                                primalOperation = true;
                                 break;
                             }
                         }
 
                     } else {
                         // opposite node is an infinity node
-                        if (varEdge.slack > eps) {
-                            // this edge isn't tight
-                            if (varEdge.slack < criticalEps) {
-                                if (oppositeNode.bestEdge == null) {
-                                    oppositeNode.bestEdge = varEdge;
-                                    addToHead(fibHeap, varEdge);
-                                } else {
-                                    if (varEdge.slack < oppositeNode.bestEdge.slack) {
-                                        fibHeap.delete(oppositeNode.bestEdge.fibNode);
-                                        addToHead(fibHeap, varEdge);
-                                        oppositeNode.bestEdge = varEdge;
-                                    }
+                        handleInfinityEdgeInit(fibHeap, varEdge, varDir, eps, criticalEps);
+                    }
+                }
+                if (primalOperation) {
+                    // finish processing incident edges
+                    while (iterator.hasNext()) {
+                        iterator.next().slack += eps;
+                    }
+                    // exit the loop since we can perform shrink or augment operation
+                    break;
+                } else {
+                    /*
+                     * Moving currentNode to the next unprocessed "+" node in the tree
+                     * growing the tree if it is possible. Starting a new branch if all nodes have
+                     * been processed. Exit the loop, if the slack of fibHeap.min().getData() is >=
+                     * than the slack of critical edge (in this case we can perform primal operation
+                     * after updating the duals).
+                     */
+                    if (varNode.firstTreeChild != null) {
+                        // moving to the next grandchild
+                        varNode = varNode.firstTreeChild.getOppositeMatched();
+                    } else {
+                        // trying to find another unprocessed node
+                        while (varNode != branchRoot && varNode.treeSiblingNext == null) {
+                            varNode = varNode.getTreeParent();
+                        }
+                        if (varNode.isMinusNode()) {
+                            // found an unprocessed node
+                            varNode = varNode.treeSiblingNext.getOppositeMatched();
+                        } else if (varNode == branchRoot) {
+                            // we've processed all nodes in the current branch
+                            Edge minSlackEdge = fibHeap.isEmpty() ? null : fibHeap.min().getData();
+                            if (minSlackEdge == null || minSlackEdge.slack >= criticalEps) {
+                                // can perform primal operation after updating duals
+                                eps = criticalEps;
+                                break;
+                            } else {
+                                // growing minimum slack edge
+                                if(DEBUG){
+                                    System.out.println("Growing an edge " + minSlackEdge);
                                 }
-                            }
+                                int dirToFreeNode = minSlackEdge.head[0].isInfinityNode() ? 0 : 1;
+                                varNode = minSlackEdge.head[1 - dirToFreeNode];
+                                Node minusNode = minSlackEdge.head[dirToFreeNode];
+                                removeFromHeap(fibHeap, minusNode);
+                                minusNode.label = MINUS;
+                                varNode.addChild(minusNode, minSlackEdge, true);
+                                eps = minSlackEdge.slack;
 
-                        } else {
-                            // this is a tight edge
-                            if (oppositeNode.bestEdge != null) {
-                                fibHeap.delete(oppositeNode.bestEdge.fibNode);
-                            }
-                            oppositeNode.label = MINUS;
-                            oppositeNode.tree = varNode.tree;
-                            varNode.addChild(oppositeNode, varEdge, true);
+                                Node plusNode = minusNode.getOppositeMatched();
+                                if (plusNode.bestEdge != null) {
+                                    removeFromHeap(fibHeap, plusNode);
+                                }
+                                plusNode.label = PLUS;
+                                minusNode.addChild(plusNode, minusNode.matched, true);
 
-                            Node plusNode = oppositeNode.matched.getOpposite(oppositeNode);
-                            if (plusNode.bestEdge != null) {
-                                fibHeap.delete(plusNode.bestEdge.fibNode);
+                                //Starting a new branch
+                                if(DEBUG){
+                                    System.out.println("New branch root is " + plusNode);
+                                }
+                                varNode = branchRoot = plusNode;
                             }
-                            oppositeNode.addChild(plusNode, plusNode.matched, true);
                         }
                     }
                 }
-
             }
 
-            for (Tree.TreeNodeIterator iterator = new Tree.TreeNodeIterator(root); iterator.hasNext(); ) {
-                varNode = iterator.next();
+            // updating duals
+            updateDuals(root, eps);
+            if (DEBUG) {
+                state.printState();
+            }
 
+            // applying primal operation
+            Node from = criticalEdge.head[1 - criticalDir];
+            Node to = criticalEdge.head[criticalDir];
+            if (flag == SHRINK) {
+                shrinkInit(criticalEdge, root);
+            } else {
+                if(DEBUG){
+                    System.out.println("Augmenting an edge " + criticalEdge);
+                }
+                augmentBranchInit(root, from, criticalEdge);
+                if (to.isOuter) {
+                    augmentBranchInit(to, to, criticalEdge);
+                } else {
+                    expandInit(to);
+                }
             }
 
 
@@ -418,7 +501,11 @@ class Initializer<V, E> {
             }
         }
 
+        return finish();
+    }
 
+    private int finish() {
+        Node varNode;
         Node prevRoot = nodes[nodeNum];
         int treeNum = 0;
         for (int i = 0; i < nodeNum; i++) {
@@ -438,10 +525,75 @@ class Initializer<V, E> {
         return treeNum;
     }
 
-    private void addToHead(FibonacciHeap<Edge> heap, Edge edge) {
-        FibonacciHeapNode<Edge> node = new FibonacciHeapNode<>(edge);
-        edge.fibNode = node;
-        heap.insert(node, edge.slack);
+    private void updateDuals(Node root, double eps) {
+        Node varNode, oppositeNode;
+        for (Tree.TreeNodeIterator treeNodeIterator = new Tree.TreeNodeIterator(root); treeNodeIterator.hasNext(); ) {
+            varNode = treeNodeIterator.next();
+            if (varNode.isProcessed) {
+                varNode.dual += eps;
+                if (!varNode.isTreeRoot) {
+                    oppositeNode = varNode.getOppositeMatched();
+                    oppositeNode.dual -= eps;
+                    double delta = eps - varNode.matched.slack;
+                    for (Node.IncidentEdgeIterator incidentEdgeIterator = oppositeNode.incidentEdgesIterator(); incidentEdgeIterator.hasNext(); ) {
+                        incidentEdgeIterator.next().slack += delta;
+                    }
+                    oppositeNode.bestEdge = null;
+                }
+                // TODO find out whether the loop is needed
+                varNode.isProcessed = false;
+            } else if (varNode.isPlusNode() && !varNode.isTreeRoot) {
+                varNode.getOppositeMatched().bestEdge = null;
+            }
+        }
+    }
+
+    private void handleInfinityEdgeInit(FibonacciHeap<Edge> fibHeap, Edge varEdge, int dir, double eps, double criticalEps) {
+        Node varNode = varEdge.head[1 - dir];
+        Node oppositeNode = varEdge.head[dir];
+        if (varEdge.slack > eps) {
+            // this edge isn't tight
+            if (varEdge.slack < criticalEps) {
+                if (oppositeNode.fibNode == null) {
+                    addToHead(fibHeap, oppositeNode, varEdge);
+                } else {
+                    if (varEdge.slack < oppositeNode.bestEdge.slack) {
+                        removeFromHeap(fibHeap, oppositeNode);
+                        addToHead(fibHeap, oppositeNode, varEdge);
+                    }
+                }
+            }
+        } else {
+            if(DEBUG){
+                System.out.println("Growing an edge " + varEdge);
+            }
+            // this is a tight edge, can grow it
+            if (oppositeNode.bestEdge != null) {
+                removeFromHeap(fibHeap, oppositeNode);
+            }
+            oppositeNode.label = MINUS;
+            varNode.addChild(oppositeNode, varEdge, true);
+
+            Node plusNode = oppositeNode.matched.getOpposite(oppositeNode);
+            if (plusNode.bestEdge != null) {
+                removeFromHeap(fibHeap, plusNode);
+            }
+            plusNode.label = PLUS;
+            oppositeNode.addChild(plusNode, plusNode.matched, true);
+        }
+    }
+
+    private void addToHead(FibonacciHeap<Edge> heap, Node node, Edge edge) {
+        FibonacciHeapNode<Edge> fibNode = new FibonacciHeapNode<>(edge);
+        edge.fibNode = fibNode;
+        node.bestEdge = edge;
+        heap.insert(fibNode, edge.slack);
+    }
+
+    private void removeFromHeap(FibonacciHeap<Edge> heap, Node node) {
+        heap.delete(node.bestEdge.fibNode);
+        node.bestEdge.fibNode = null;
+        node.bestEdge = null;
     }
 
     private void augmentBranchInit(Node root, Node branchStart, Edge augmentEdge) {
@@ -567,7 +719,7 @@ class Initializer<V, E> {
         GREEDY, NONE, FRACTIONAL,
     }
 
-    private enum Stat {
+    enum Action {
         NONE, SHRINK, AUGMENT,
     }
 }

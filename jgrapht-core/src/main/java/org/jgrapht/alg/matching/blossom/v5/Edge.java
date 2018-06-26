@@ -50,7 +50,7 @@ class Edge {
      * A two-element array of current endpoints of this edge. These values change when previous endpoints are
      * contracted into blossoms or are expanded. For node head[0] this is an incoming edge (direction 1) and for
      * the node head[1] this is an outgoing edge (direction 0). This feature is used to be able to access the
-     * opposite node via an edge by incidentEdgeIterator.next().head[incidentEdgeIterator.getDir()].
+     * opposite node via an edge by incidentEdgesIterator.next().head[incidentEdgesIterator.getDir()].
      */
     Node[] head;
 

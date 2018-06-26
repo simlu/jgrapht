@@ -19,18 +19,21 @@ package org.jgrapht.alg.matching.blossom.v5;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.interfaces.MatchingAlgorithm;
 import org.jgrapht.graph.DefaultUndirectedWeightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.Test;
 
 import java.util.*;
 
-import static org.jgrapht.alg.matching.blossom.v5.Initializer.InitializationType.GREEDY;
-import static org.jgrapht.alg.matching.blossom.v5.Initializer.InitializationType.NONE;
+import static org.jgrapht.alg.matching.blossom.v5.Initializer.InitializationType.*;
 import static org.jgrapht.alg.matching.blossom.v5.KolmogorovMinimumWeightPerfectMatching.EPS;
+import static org.jgrapht.alg.matching.blossom.v5.KolmogorovMinimumWeightPerfectMatchingTest.checkMatchingAndDualSolution;
 import static org.junit.Assert.*;
 
 public class InitializerTest {
+
+    private KolmogorovMinimumWeightPerfectMatching.Options fractionalOptions = new KolmogorovMinimumWeightPerfectMatching.Options(FRACTIONAL);
 
     @Test
     public void testGreedyInitialization() {
@@ -155,6 +158,43 @@ public class InitializerTest {
         assertEquals(3, BlossomVDebugger.treeEdgesOf(tree5).size());
         assertEquals(1, BlossomVDebugger.treeEdgesOf(tree6).size());
         assertEquals(0, BlossomVDebugger.treeEdgesOf(tree7).size());
+    }
+
+    @Test
+    public void testFractionalInitialization1() {
+        Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
+        int[][] edges = new int[][]{{0, 3, 8},{0, 4, 3},{0, 5, 3},{1, 3, 2},{1, 4, 5},{1, 5, 2},{2, 3, 7},{2, 4, 3},
+                {2, 5, 4}};
+        for (int[] edge : edges) {
+            Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
+        }
+        KolmogorovMinimumWeightPerfectMatching<Integer, DefaultWeightedEdge> perfectMatching = new KolmogorovMinimumWeightPerfectMatching<>(graph, fractionalOptions);
+        MatchingAlgorithm.Matching<Integer, DefaultWeightedEdge> matching = perfectMatching.getMatching();
+        KolmogorovMinimumWeightPerfectMatching.Statistics statistics = perfectMatching.getStatistics();
+
+        assertEquals(0, perfectMatching.getError(), EPS);
+        assertEquals(0, statistics.growNum);
+        assertEquals(0, statistics.shrinkNum);
+        assertEquals(0, statistics.expandNum);
+        checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
+    }
+
+    @Test
+    public void testFractionalInitialization2() {
+        Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
+
+    }
+
+    @Test
+    public void testFractionalInitialization3() {
+        Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
+
+    }
+
+    @Test
+    public void testFractionalInitialization4() {
+        Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
+
     }
 
 

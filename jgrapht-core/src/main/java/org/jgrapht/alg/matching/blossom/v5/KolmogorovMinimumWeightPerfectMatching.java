@@ -51,7 +51,7 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
     /**
      * Variable for debug purposes
      */
-    static final boolean DEBUG = false;
+    static final boolean DEBUG = true;
     /**
      * Message about no perfect matching
      */
@@ -176,8 +176,8 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
         this.primalUpdater = new PrimalUpdater<>(state);
         this.dualUpdater = new DualUpdater<>(state, primalUpdater);
         initAuxiliaryGraph();
-        if (DEBUG){
-            printMap();
+        if (DEBUG) {
+            state.printMap();
         }
 
         Node currentRoot;
@@ -196,8 +196,9 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
                 tree = currentRoot.tree;
                 int iterationTreeNum = state.treeNum;
 
-                if (DEBUG)
-                    printState();
+                if (DEBUG) {
+                    state.printState();
+                }
 
                 // first phase
                 state.setCurrentEdges(tree);
@@ -210,7 +211,7 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
                 // applying primal operations to the current tree while it is possible
                 while (iterationTreeNum == state.treeNum) {
                     if (DEBUG) {
-                        printState();
+                        state.printState();
                         System.out.println("Current tree is " + tree + ", current root is " + currentRoot);
                     }
 
@@ -247,7 +248,7 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
                     break;
                 }
                 if (DEBUG) {
-                    printState();
+                    state.printState();
                 }
 
                 // third phase
@@ -269,8 +270,8 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
             }
 
             if (DEBUG) {
-                printTrees();
-                printState();
+                state.printTrees();
+                state.printState();
             }
 
             if (state.treeNum == 0) {
@@ -647,59 +648,6 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
         return new DualSolution(graph, dualMap);
     }
 
-    /**
-     * Debug method
-     */
-    private void printState() {
-        Node[] nodes = state.nodes;
-        Edge[] edges = state.edges;
-        System.out.println();
-        for (int i = 0; i < 20; i++) {
-            System.out.print("-");
-        }
-        System.out.println();
-        Set<Edge> matched = new HashSet<>();
-        for (int i = 0; i < state.nodeNum; i++) {
-            Node node = nodes[i];
-            if (node.matched != null) {
-                Edge matchedEdge = node.matched;
-                matched.add(node.matched);
-                if (matchedEdge.head[0].matched == null || matchedEdge.head[1].matched == null) {
-                    System.out.println("Problem with edge " + matchedEdge);
-                    throw new RuntimeException();
-                }
-            }
-            System.out.println(nodes[i]);
-        }
-        for (int i = 0; i < 20; i++) {
-            System.out.print("-");
-        }
-        System.out.println();
-        for (int i = 0; i < state.edgeNum; i++) {
-            System.out.println(edges[i] + (matched.contains(edges[i]) ? ", matched" : ""));
-        }
-    }
-
-    /**
-     * Debug method
-     */
-    private void printTrees() {
-        System.out.println("Printing trees");
-        for (Node root = state.nodes[state.nodeNum].treeSiblingNext; root != null; root = root.treeSiblingNext) {
-            Tree tree = root.tree;
-            System.out.println(tree);
-        }
-    }
-
-    /**
-     * Debug method
-     */
-    private void printMap() {
-        System.out.println(state.nodeNum + " " + state.edgeNum);
-        for (Map.Entry<V, Node> entry : state.vertexMap.entrySet()) {
-            System.out.println(entry.getKey() + " -> " + entry.getValue());
-        }
-    }
 
     /**
      * Returns the statistics describing the performance characteristics of the algorithm.

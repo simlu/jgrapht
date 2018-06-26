@@ -230,6 +230,15 @@ class Node {
     }
 
     /**
+     * Returns a node this node is matched to. Returns null in the case this node isn't matched
+     *
+     * @return a node this node is matched to, or null if this is an unmatched node
+     */
+    public Node getOppositeMatched() {
+        return matched == null ? null : matched.getOpposite(this);
+    }
+
+    /**
      * Appends the {@code child} to the end of the linked list of children of this node. The {@code parentEdge}
      * becomes the parent edge of the {@code child}
      *
@@ -441,6 +450,17 @@ class Node {
         return new IncidentEdgeIterator();
     }
 
+    /**
+     * Returns an iterator over incident edge of this node starting from {@code edge} in the direction {@code dir}
+     *
+     * @param edge the edge to start from
+     * @param dir  the direction of the {@code edge}
+     * @return a new instance of {@code IncidentEdgeIterator}, which start from {@code edge}
+     */
+    public IncidentEdgeIterator incidentEdgesIterator(Edge edge, int dir) {
+        return new IncidentEdgeIterator(edge, dir);
+    }
+
     @Override
     public String toString() {
         return "Node id = " + id + ", dual: " + dual + ", true dual: " + getTrueDual()
@@ -495,6 +515,18 @@ class Node {
                 this.dir = 0;
             }
             current = currentEdge;
+        }
+
+        /**
+         * Constructs an iterator over incident edges of this node, which starts from the {@code edge}
+         * in the direction {@code dir}
+         *
+         * @param edge the edge to start from
+         * @param dir  the direction of the {@code edge}
+         */
+        public IncidentEdgeIterator(Edge edge, int dir) {
+            this.currentEdge = this.current = edge;
+            this.dir = dir;
         }
 
         /**

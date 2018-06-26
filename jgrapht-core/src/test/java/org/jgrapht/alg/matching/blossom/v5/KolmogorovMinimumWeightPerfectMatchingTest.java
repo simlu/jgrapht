@@ -54,12 +54,16 @@ public class KolmogorovMinimumWeightPerfectMatchingTest {
         return new Object[]{
                 new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.NONE),  // [0]
                 new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.GREEDY),  // [1]
-                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.NONE), // [2]
-                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.GREEDY),  // [3]
-                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.NONE),  // [4]
-                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.GREEDY),  // [5]
-                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.NONE),  // [6]
-                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.GREEDY),  // [7]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.FRACTIONAL),  // [2]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.NONE), // [3]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.GREEDY),  // [4]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_BEFORE, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.FRACTIONAL), // [5]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.NONE),  // [6]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.GREEDY),  // [7]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_FIXED_DELTA, Initializer.InitializationType.FRACTIONAL),  // [8]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.NONE),  // [9]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.GREEDY),  // [10]
+                new KolmogorovMinimumWeightPerfectMatching.Options(UPDATE_DUAL_AFTER, MULTIPLE_TREE_CONNECTED_COMPONENTS, Initializer.InitializationType.FRACTIONAL),  // [11]
         };
     }
 
@@ -2263,7 +2267,7 @@ public class KolmogorovMinimumWeightPerfectMatchingTest {
     }
 
 
-    private <V, E> void checkMatchingAndDualSolution(MatchingAlgorithm.Matching<V, E> matching,
+    static <V, E> void checkMatchingAndDualSolution(MatchingAlgorithm.Matching<V, E> matching,
                                                      KolmogorovMinimumWeightPerfectMatching<V, E>.DualSolution dualSolution) {
         Graph<V, E> graph = dualSolution.getGraph();
         assertEquals(graph.vertexSet().size(), 2 * matching.getEdges().size());

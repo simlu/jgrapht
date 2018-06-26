@@ -19,10 +19,7 @@ package org.jgrapht.alg.matching.blossom.v5;
 
 import org.jgrapht.Graph;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * Stores data needed for the Kolmogorov's Blossom V algorithm is used by {@link KolmogorovMinimumWeightPerfectMatching},
@@ -258,6 +255,58 @@ class State<V, E> {
      */
     public BlossomNodesIterator blossomNodesIterator(Node root, Edge blossomFormingEdge) {
         return new BlossomNodesIterator(root, blossomFormingEdge);
+    }
+
+    /**
+     * Debug method
+     */
+    void printState() {
+        System.out.println();
+        for (int i = 0; i < 20; i++) {
+            System.out.print("-");
+        }
+        System.out.println();
+        Set<Edge> matched = new HashSet<>();
+        for (int i = 0; i < nodeNum; i++) {
+            Node node = nodes[i];
+            if (node.matched != null) {
+                Edge matchedEdge = node.matched;
+                matched.add(node.matched);
+                if (matchedEdge.head[0].matched == null || matchedEdge.head[1].matched == null) {
+                    System.out.println("Problem with edge " + matchedEdge);
+                    throw new RuntimeException();
+                }
+            }
+            System.out.println(nodes[i]);
+        }
+        for (int i = 0; i < 20; i++) {
+            System.out.print("-");
+        }
+        System.out.println();
+        for (int i = 0; i < edgeNum; i++) {
+            System.out.println(edges[i] + (matched.contains(edges[i]) ? ", matched" : ""));
+        }
+    }
+
+    /**
+     * Debug method
+     */
+    void printTrees() {
+        System.out.println("Printing trees");
+        for (Node root = nodes[nodeNum].treeSiblingNext; root != null; root = root.treeSiblingNext) {
+            Tree tree = root.tree;
+            System.out.println(tree);
+        }
+    }
+
+    /**
+     * Debug method
+     */
+    void printMap() {
+        System.out.println(nodeNum + " " + edgeNum);
+        for (Map.Entry<V, Node> entry : vertexMap.entrySet()) {
+            System.out.println(entry.getKey() + " -> " + entry.getValue());
+        }
     }
 
     /**
