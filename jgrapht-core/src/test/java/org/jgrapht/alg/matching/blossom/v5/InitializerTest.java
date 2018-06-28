@@ -35,6 +35,9 @@ public class InitializerTest {
 
     private KolmogorovMinimumWeightPerfectMatching.Options fractionalOptions = new KolmogorovMinimumWeightPerfectMatching.Options(FRACTIONAL);
 
+    /**
+     * Tests greedy initialization
+     */
     @Test
     public void testGreedyInitialization() {
         DefaultUndirectedWeightedGraph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
@@ -68,8 +71,11 @@ public class InitializerTest {
         assertEquals(edge12, node2.matched);
     }
 
+    /**
+     * Tests simple initialization
+     */
     @Test
-    public void testInitializeNone() {
+    public void testSimpleInitialization() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
         DefaultWeightedEdge e12 = Graphs.addEdgeWithVertices(graph, 1, 2, 1);
         DefaultWeightedEdge e23 = Graphs.addEdgeWithVertices(graph, 2, 3, 2);
@@ -160,10 +166,13 @@ public class InitializerTest {
         assertEquals(0, BlossomVDebugger.treeEdgesOf(tree7).size());
     }
 
+    /**
+     * Tests fractional matching initialization on a bipartite graph with $V = {0,1,2}\cup{4,5,6}$
+     */
     @Test
     public void testFractionalInitialization1() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 3, 8},{0, 4, 3},{0, 5, 3},{1, 3, 2},{1, 4, 5},{1, 5, 2},{2, 3, 7},{2, 4, 3},
+        int[][] edges = new int[][]{{0, 3, 8}, {0, 4, 3}, {0, 5, 3}, {1, 3, 2}, {1, 4, 5}, {1, 5, 2}, {2, 3, 7}, {2, 4, 3},
                 {2, 5, 4}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
@@ -180,10 +189,13 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
+    /**
+     * Tests fractional matching initialization on a bipartite graph with $V = {0,1,2}\cup{4,5,6}$
+     */
     @Test
     public void testFractionalInitialization2() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 3, 4},{0, 4, 4},{0, 5, 4},{1, 3, 5},{1, 4, 8},{1, 5, 10},{2, 3, 4},{2, 4, 6},
+        int[][] edges = new int[][]{{0, 3, 4}, {0, 4, 4}, {0, 5, 4}, {1, 3, 5}, {1, 4, 8}, {1, 5, 10}, {2, 3, 4}, {2, 4, 6},
                 {2, 5, 5}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
@@ -200,11 +212,14 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
+    /**
+     * Tests fractional matching initialization on a bipartite graph with $V = {0,1,2,3}\cup{4,5,6,7}$
+     */
     @Test
     public void testFractionalInitialization3() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 5, 6},{0, 6, 8},{1, 5, 5},{1, 6, 5},{1, 7, 3},{2, 4, 2},{2, 5, 1},{2, 6, 8},
-                {3, 5, 5},{3, 7, 9}};
+        int[][] edges = new int[][]{{0, 5, 6}, {0, 6, 8}, {1, 5, 5}, {1, 6, 5}, {1, 7, 3}, {2, 4, 2}, {2, 5, 1}, {2, 6, 8},
+                {3, 5, 5}, {3, 7, 9}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
         }
@@ -220,11 +235,14 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
+    /**
+     * Tests fractional matching initialization on a bipartite graph with $V = {0,1,2,3}\cup{4,5,6,7}$
+     */
     @Test
     public void testFractionalInitialization4() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 5, 2},{0, 6, 2},{0, 7, 1},{1, 4, 6},{1, 7, 10},{2, 4, 7},{2, 6, 8},{2, 7, 10},
-                {3, 4, 5},{3, 5, 9}};
+        int[][] edges = new int[][]{{0, 5, 2}, {0, 6, 2}, {0, 7, 1}, {1, 4, 6}, {1, 7, 10}, {2, 4, 7}, {2, 6, 8}, {2, 7, 10},
+                {3, 4, 5}, {3, 5, 9}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
         }
@@ -240,12 +258,14 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
-
+    /**
+     * Tests fractional matching initialization on triangulation of 8 points
+     */
     @Test
-    public void testFractionalInitialization5(){
+    public void testFractionalInitialization5() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{1, 0, 2},{1, 2, 5},{0, 2, 4},{1, 4, 5},{2, 4, 2},{1, 3, 2},{1, 5, 4},{3, 5, 3},
-                {4, 5, 5},{3, 6, 4},{5, 6, 2},{5, 7, 3},{6, 7, 4},{4, 7, 4}};
+        int[][] edges = new int[][]{{1, 0, 2}, {1, 2, 5}, {0, 2, 4}, {1, 4, 5}, {2, 4, 2}, {1, 3, 2}, {1, 5, 4}, {3, 5, 3},
+                {4, 5, 5}, {3, 6, 4}, {5, 6, 2}, {5, 7, 3}, {6, 7, 4}, {4, 7, 4}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
         }
@@ -257,8 +277,11 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
+    /**
+     * Tests fractional matching initialization on triangulation of 8 points
+     */
     @Test
-    public void testFractionalInitialization6(){
+    public void testFractionalInitialization6() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
         int[][] edges = new int[][]{{0, 1, 5}, {0, 2, 9}, {1, 2, 6}, {2, 3, 4}, {2, 4, 5}, {3, 4, 3}, {1, 4, 8}, {1, 5, 8},
                 {0, 5, 11}, {4, 5, 7}, {4, 6, 3}, {5, 6, 5}, {6, 7, 3}, {5, 7, 6}, {4, 7, 6}, {3, 7, 9}};
@@ -274,11 +297,14 @@ public class InitializerTest {
 
     }
 
+    /**
+     * Tests fractional matching initialization on triangulation of 8 points
+     */
     @Test
-    public void testFractionalInitialization7(){
+    public void testFractionalInitialization7() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 1, 2},{0, 2, 8},{1, 2, 7},{0, 4, 8},{1, 4, 7},{2, 4, 6},{2, 3, 9},{2, 5, 6},
-                {3, 5, 6},{2, 6, 6},{5, 6, 5},{4, 6, 2},{5, 7, 9},{6, 7, 7},{3, 7, 14},{4, 7, 7},{0, 7, 15}};
+        int[][] edges = new int[][]{{0, 1, 2}, {0, 2, 8}, {1, 2, 7}, {0, 4, 8}, {1, 4, 7}, {2, 4, 6}, {2, 3, 9}, {2, 5, 6},
+                {3, 5, 6}, {2, 6, 6}, {5, 6, 5}, {4, 6, 2}, {5, 7, 9}, {6, 7, 7}, {3, 7, 14}, {4, 7, 7}, {0, 7, 15}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
         }
@@ -290,11 +316,14 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
+    /**
+     * Tests fractional matching initialization on triangulation of 8 points
+     */
     @Test
-    public void testFractionalInitialization8(){
+    public void testFractionalInitialization8() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 1, 7},{0, 2, 8},{0, 3, 8},{1, 3, 4},{1, 5, 9},{1, 6, 13},{2, 4, 6},{2, 3, 11},
-                {3, 4, 10},{3, 5, 6},{4, 5, 8},{4, 7, 7},{5, 6, 4},{5, 7, 4},{6, 7, 1}};
+        int[][] edges = new int[][]{{0, 1, 7}, {0, 2, 8}, {0, 3, 8}, {1, 3, 4}, {1, 5, 9}, {1, 6, 13}, {2, 4, 6}, {2, 3, 11},
+                {3, 4, 10}, {3, 5, 6}, {4, 5, 8}, {4, 7, 7}, {5, 6, 4}, {5, 7, 4}, {6, 7, 1}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
         }
@@ -306,11 +335,14 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
     }
 
+    /**
+     * Tests fractional matching initialization on triangulation of 8 points
+     */
     @Test
-    public void testFractionalInitialization9(){
+    public void testFractionalInitialization9() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-        int[][] edges = new int[][]{{0, 1, 4},{0, 2, 4},{0, 5, 14},{1, 2, 3},{1, 3, 1},{1, 5, 11},{2, 3, 4},{2, 4, 4},
-                {2, 7, 11},{3, 4, 1},{3, 5, 10},{4, 5, 10},{4, 6, 10},{4, 7, 9},{5, 6, 3},{6, 7, 8}};
+        int[][] edges = new int[][]{{0, 1, 4}, {0, 2, 4}, {0, 5, 14}, {1, 2, 3}, {1, 3, 1}, {1, 5, 11}, {2, 3, 4}, {2, 4, 4},
+                {2, 7, 11}, {3, 4, 1}, {3, 5, 10}, {4, 5, 10}, {4, 6, 10}, {4, 7, 9}, {5, 6, 3}, {6, 7, 8}};
         for (int[] edge : edges) {
             Graphs.addEdgeWithVertices(graph, edge[0], edge[1], edge[2]);
         }
@@ -322,12 +354,5 @@ public class InitializerTest {
         checkMatchingAndDualSolution(matching, perfectMatching.getDualSolution());
 
     }
-
-    @Test
-    public void testFractionalInitialization10(){
-        Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
-
-    }
-
 
 }

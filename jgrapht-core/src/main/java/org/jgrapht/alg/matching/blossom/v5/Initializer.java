@@ -70,7 +70,6 @@ class Initializer<V, E> {
      * to the resulting state object
      */
     private Map<E, Edge> edgeMap;
-    private State<V, E> state;// TODO remove
 
     /**
      * Creates a new Initializer instance
@@ -100,28 +99,48 @@ class Initializer<V, E> {
         return null;
     }
 
+    /**
+     * Only converts the generic graph representation into a form convenient for the algorithm
+     *
+     * @param options the options of the algorithm
+     * @return the state object with all necessary for the algorithm information
+     */
     private State<V, E> simpleInitialization(KolmogorovMinimumWeightPerfectMatching.Options options) {
         initGraph();
         for (Node node : nodes) {
             node.isOuter = true;
         }
         allocateTrees();
+        initAuxiliaryGraph();
         return new State<>(graph, nodes, edges, nodeNum, edgeNum, graph.vertexSet().size(), vertexMap, edgeMap, options);
     }
 
+    /**
+     * Performs greedy initialization of the matching, {@link Initializer#initGreedy()} for the description.
+     *
+     * @param options the options of the algorithm
+     * @return the state object with all necessary for the algorithm information
+     */
     private State<V, E> greedyInitialization(KolmogorovMinimumWeightPerfectMatching.Options options) {
         initGraph();
         int treeNum = initGreedy();
         allocateTrees();
+        initAuxiliaryGraph();
         return new State<>(graph, nodes, edges, nodeNum, edgeNum, treeNum, vertexMap, edgeMap, options);
     }
 
+    /**
+     * Performs fractional matching initialization, {@link Initializer#initFractional()} ()} for the description.
+     *
+     * @param options the options of the algorithm
+     * @return the state object with all necessary for the algorithm information
+     */
     private State<V, E> fractionalMatchingInitialization(KolmogorovMinimumWeightPerfectMatching.Options options) {
         initGraph();
         initGreedy();
         allocateTrees();
-        state = new State<>(graph, nodes, edges, nodeNum, edgeNum, 0, vertexMap, edgeMap, options);
         int treeNum = initFractional();
+        initAuxiliaryGraph();
         return new State<>(graph, nodes, edges, nodeNum, edgeNum, treeNum, vertexMap, edgeMap, options);
     }
 
@@ -237,7 +256,6 @@ class Initializer<V, E> {
     }
 
     /**
-<<<<<<< HEAD
      * Initializes an auxiliary graph by adding tree edges between trees and adding (+, +) cross-tree edges
      * and (+, inf) edges to the appropriate heaps
      */
@@ -296,6 +314,12 @@ class Initializer<V, E> {
         lastRoot.treeSiblingNext = null;
     }
 
+    /**
+     * Method for finishing the fractional matching initialization. Goes through all nodes and expands half-loops.
+     * The total number or trees equals to the number of half-loops. Tree roots are being chosen arbitrarily.
+     *
+     * @return the number of trees in the resulting state object, which equals to the number of unmatched nodes
+     */
     private int finish() {
         if (DEBUG) {
             System.out.println("Finishing fractional matching initialization");
@@ -321,6 +345,16 @@ class Initializer<V, E> {
         return treeNum;
     }
 
+    /**
+     * Method for performing lazy delta spreading during the fractional matching initialization.
+     * <p>
+     * Goes through all nodes in the tree rooted at {@code root} and adds {@code eps} to the "+" nodes and
+     * subtracts {@code eps} from "-" nodes. Updates incident edges respectively.
+     *
+     * @param fibHeap the heap for storing best edges
+     * @param root    the root of the current tree
+     * @param eps     the accumulated dual change of the tree
+     */
     private void updateDuals(FibonacciHeap<Edge> fibHeap, Node root, double eps) {
         Node varNode, minusNode;
         Edge varEdge;
@@ -350,19 +384,38 @@ class Initializer<V, E> {
         }
     }
 
-    private void addToHead(FibonacciHeap<Edge> heap, Node node, Edge edge) {
-        FibonacciHeapNode<Edge> fibNode = new FibonacciHeapNode<>(edge);
-        edge.fibNode = fibNode;
-        node.bestEdge = edge;
-        heap.insert(fibNode, edge.slack);
+    /**
+     * Method for correct adding of "best edges" to the {@code fibHeap}
+     *
+     * @param heap     the heap for storing best edges
+     * @param node     infinity node {@code bestEdge} is incident to
+     * @param bestEdge current best edge of the {@code node}
+     */
+    private void addToHead(FibonacciHeap<Edge> heap, Node node, Edge bestEdge) {
+        FibonacciHeapNode<Edge> fibNode = new FibonacciHeapNode<>(bestEdge);
+        bestEdge.fibNode = fibNode;
+        node.bestEdge = bestEdge;
+        heap.insert(fibNode, bestEdge.slack);
     }
 
+    /**
+     * Method for correct removing of best edges from {@code fibHeap}
+     *
+     * @param heap the heap for storing best edges
+     * @param node the node which best edge should be removed from {@code fibHeap}
+     */
     private void removeFromHeap(FibonacciHeap<Edge> heap, Node node) {
         heap.delete(node.bestEdge.fibNode);
         node.bestEdge.fibNode = null;
         node.bestEdge = null;
     }
 
+    /**
+     * Finds blossom root during the fractional matching initialization
+     *
+     * @param blossomFormingEdge a tight (+, +) in-tree edge
+     * @return the root of the blossom formed by the {@code blossomFormingEdge}
+     */
     private Node findBlossomRootInit(Edge blossomFormingEdge) {
         Node[] branches = new Node[]{blossomFormingEdge.head[0], blossomFormingEdge.head[1]};
         Node varNode;
@@ -438,6 +491,13 @@ class Initializer<V, E> {
         }
     }
 
+    /**
+     * Augments the tree rooted at {@code root} via {@code augmentEdge}. The augmenting branch starts at {@code branchStart}
+     *
+     * @param root        the root of the tree to augment
+     * @param branchStart the endpoint of the {@code augmentEdge} which belongs to the currentTree
+     * @param augmentEdge a tight (+, +) cross-tree edge
+     */
     private void augmentBranchInit(Node root, Node branchStart, Edge augmentEdge) {
         if (DEBUG) {
             System.out.println("Augmenting an edge " + augmentEdge);
@@ -459,9 +519,18 @@ class Initializer<V, E> {
 
         root.removeFromChildList();
         root.isTreeRoot = false;
-        // TODO: decrement treeNum
     }
 
+    /**
+     * Forms a 1/2-valued odd circuit. Nodes from the odd circuit aren't actually contracted into a single
+     * pseudonode. The blossomSibling references are set so that the nodes form a circular linked list.
+     * The matching is updated respectively.
+     * <p>
+     * <b>Note: </b> each node of the circuit can be expanded in the future and become a new tree root.
+     *
+     * @param blossomFormingEdge a tight (+, +) in-tree edge that forms an odd circuit
+     * @param treeRoot           the root of the tree odd circuit belongs to
+     */
     private void shrinkInit(Edge blossomFormingEdge, Node treeRoot) {
         if (DEBUG) {
             System.out.println("Shrinking an edge " + blossomFormingEdge);
@@ -501,6 +570,15 @@ class Initializer<V, E> {
 
     }
 
+    /**
+     * Expands a 1/2-valued odd circuit. Essentially, changes the matching of the circuit so that
+     * {@code blossomNode} becomes an unmatched node. Sets the labels of the matched nodes of the
+     * circuit to {@link org.jgrapht.alg.matching.blossom.v5.Node.Label#INFINITY}
+     *
+     * @param blossomNode        some node that belongs to the "contracted" odd circuit
+     * @param blossomNodeMatched a matched edge of the {@code blossomNode}, which doesn't belong to the
+     *                           circuit. Note: this value can be {@code null}
+     */
     private void expandInit(Node blossomNode, Edge blossomNodeMatched) {
         if (DEBUG) {
             System.out.println("Expanding node " + blossomNode);
@@ -524,6 +602,18 @@ class Initializer<V, E> {
         } while (currentNode != blossomNode);
     }
 
+    /**
+     * Solves the fractional matching problem formulated on the initial graph. The linear programming
+     * formulation of the fractional matching problem is identical to the one used for bipartite graphs.
+     * More precisely:
+     * <oi>
+     * <li>Minimize the $sum_{e\in E}x_e\times c_e$ subject to:</li>
+     * <li>For all nodes: $\sum_{e is incident to v}x_e = 1$</li>
+     * <li>For all edges: $x_e \ge 0$</li>
+     * </oi>
+     *
+     * @return the number of trees in the resulting state object, which equals to the number of unmatched nodes.
+     */
     private int initFractional() {
         Node root;
         Node root2;
@@ -534,10 +624,6 @@ class Initializer<V, E> {
         Node oppositeNode;
         Node.IncidentEdgeIterator iterator;
 
-        if (DEBUG) {
-            state.printMap();
-            state.printState();
-        }
         /*
          * For every free node u, which is adjacent to at least one "+" node in the current tree, we keep track
          * of an edge, that has minimum slack and connects node u and some "+" node in the current tree.
@@ -568,10 +654,10 @@ class Initializer<V, E> {
              * => we go out of the loop, apply lazy dual changes to the current branch and perform an
              * augment or shrink operation.
              *
-             * Tree is being grown in phases. Each phase starts with a new "branch" the reason to
-             * start a new branch is that the tree can't be grown any further and there no primal opetation
-             * can be applied. Therefore, we choose an edge of minimum slack from fibHeap, set the eps of the branch
-             * so that this edge becomes tight
+             * Tree is being grown in phases. Each phase starts with a new "branch", the reason to
+             * start a new branch is that the tree can't be grown any further without dual changes and there
+             * no primal operation can be applied. Therefore, we choose an edge of minimum slack from fibHeap,
+             * set the eps of the branch so that this edge becomes tight
              */
             while (true) {
                 varNode.isProcessed = true;
@@ -666,7 +752,7 @@ class Initializer<V, E> {
                                 if (DEBUG) {
                                     System.out.println("Now current eps = " + criticalEps);
                                 }
-                                if(criticalEps > NO_PERFECT_MATCHING_THRESHOLD){
+                                if (criticalEps > NO_PERFECT_MATCHING_THRESHOLD) {
                                     throw new IllegalArgumentException(NO_PERFECT_MATCHING);
                                 }
                                 eps = criticalEps;
@@ -682,7 +768,7 @@ class Initializer<V, E> {
                                 removeFromHeap(fibHeap, minusNode);
                                 minusNode.label = MINUS;
                                 varNode.addChild(minusNode, minSlackEdge, true);
-                                eps = minSlackEdge.slack;
+                                eps = minSlackEdge.slack; // setting new eps of the tree
 
                                 Node plusNode = minusNode.getOppositeMatched();
                                 if (plusNode.bestEdge != null) {
@@ -691,10 +777,10 @@ class Initializer<V, E> {
                                 plusNode.label = PLUS;
                                 minusNode.addChild(plusNode, minusNode.matched, true);
 
-                                //Starting a new branch
                                 if (DEBUG) {
                                     System.out.println("New branch root is " + plusNode + ", eps = " + eps);
                                 }
+                                //Starting a new branch
                                 varNode = branchRoot = plusNode;
                             }
                         }
@@ -704,9 +790,6 @@ class Initializer<V, E> {
 
             // updating duals
             updateDuals(fibHeap, root, eps);
-            if (DEBUG) {
-                state.printState();
-            }
 
             // applying primal operation
             Node from = criticalEdge.head[1 - criticalDir];
@@ -716,8 +799,10 @@ class Initializer<V, E> {
             } else {
                 augmentBranchInit(root, from, criticalEdge);
                 if (to.isOuter) {
-                    augmentBranchInit(to, to, criticalEdge);
+                    // node to doesn't belong to a 1/2-values odd circuit
+                    augmentBranchInit(to, to, criticalEdge); // to is the root of the opposite tree
                 } else {
+                    // node to belons to a 1/2-values odd circuit
                     expandInit(to, criticalEdge);
                 }
             }
@@ -739,6 +824,10 @@ class Initializer<V, E> {
         GREEDY, NONE, FRACTIONAL,
     }
 
+    /**
+     * Enum for specifying the primal operation to perform with critical edge during fractional matching
+     * initialization
+     */
     enum Action {
         NONE, SHRINK, AUGMENT,
     }

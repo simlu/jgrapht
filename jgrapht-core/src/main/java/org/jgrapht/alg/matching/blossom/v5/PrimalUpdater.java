@@ -136,7 +136,7 @@ class PrimalUpdater<V, E> {
      * has label {@link Node.Label#PLUS}. If the former endpoint had
      * label {@link Node.Label#MINUS}, 2*tree.eps is added to its slack</li>
      * <li>Children of circuit nodes are moved to the blossom, their parent edges are changed respectively</li>
-     * <li>The blossomSibling references are set so that they form a circular linked list</li>
+     * <li>The blossomSibling references are set so that the nodes form a circular linked list</li>
      * <li>If the blossom becomes a tree root, it substitutes the previous tree's root in the linked list of tree roots</li>
      * </ul>
      *

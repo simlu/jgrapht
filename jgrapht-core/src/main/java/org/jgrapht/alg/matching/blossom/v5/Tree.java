@@ -154,7 +154,7 @@ class Tree {
      */
     public void removePlusPlusEdge(Edge edge) {
         plusPlusEdges.delete(edge.fibNode);
-        edge.fibNode = null; // strict mode, todo: remove
+        //edge.fibNode = null; // strict mode, todo: remove
     }
 
     /**
@@ -164,7 +164,7 @@ class Tree {
      */
     public void removePlusInfinityEdge(Edge edge) {
         plusInfinityEdges.delete(edge.fibNode);
-        edge.fibNode = null; // strict mode, todo: remove
+        //edge.fibNode = null; // strict mode, todo: remove
     }
 
     /**
@@ -174,7 +174,7 @@ class Tree {
      */
     public void removeMinusBlossom(Node blossom) {
         minusBlossoms.delete(blossom.fibNode);
-        blossom.fibNode = null; // strict mode: todo: remove
+        //blossom.fibNode = null; // strict mode: todo: remove
     }
 
     /**
