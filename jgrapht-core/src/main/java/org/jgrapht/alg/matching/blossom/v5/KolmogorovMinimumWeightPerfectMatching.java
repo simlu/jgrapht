@@ -51,7 +51,7 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
     /**
      * Variable for debug purposes
      */
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = false;
     /**
      * Message about no perfect matching
      */
@@ -713,7 +713,7 @@ public class KolmogorovMinimumWeightPerfectMatching<V, E> implements MatchingAlg
          * @param initializationType defines a strategy to use to initialize the matching
          */
         public Options(Initializer.InitializationType initializationType) {
-            this.initializationType = initializationType;
+            this(DEFAULT_PHASE, DEFAULT_DUAL_UPDATE_TYPE, initializationType);
         }
 
         /**

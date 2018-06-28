@@ -244,14 +244,18 @@ class Node {
      *
      * @param child      the new child of this node
      * @param parentEdge the edge between this node and {@code child}
+     *                   <<<<<<< HEAD
      * @param grow       true if {@code child} is being grown
+     *                   =======
+     * @param grow       whether {@code child} is been grown or not
+     *                   >>>>>>> Fixed bugs in fractional matching initialization
      */
     public void addChild(Node child, Edge parentEdge, boolean grow) {
         child.parentEdge = parentEdge;
         child.tree = tree;
         child.treeSiblingNext = firstTreeChild;
         if (grow) {
-            // if child is being grown => we have to overwrite all its tree structure data
+            // with this check we are able not to destroy tree structure during the augment operation
             child.firstTreeChild = null;
         }
         if (firstTreeChild == null) {

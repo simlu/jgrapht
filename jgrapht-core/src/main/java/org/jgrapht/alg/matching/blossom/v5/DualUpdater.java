@@ -20,6 +20,7 @@ package org.jgrapht.alg.matching.blossom.v5;
 import org.jgrapht.util.FibonacciHeap;
 
 import static java.lang.Math.abs;
+import static org.jgrapht.alg.matching.blossom.v5.KolmogorovMinimumWeightPerfectMatching.DEBUG;
 
 /**
  * This class is used by {@link KolmogorovMinimumWeightPerfectMatching} to perform dual updates, thus creating
@@ -64,7 +65,7 @@ class DualUpdater<V, E> {
     public double updateDuals(DualUpdateStrategy type) {
         long start = System.nanoTime();
 
-        if (KolmogorovMinimumWeightPerfectMatching.DEBUG) {
+        if (DEBUG) {
             System.out.println("Start updating duals");
         }
         // going through all trees roots
@@ -87,7 +88,7 @@ class DualUpdater<V, E> {
                 root.tree.eps += root.tree.accumulatedEps;
             }
         }
-        if (KolmogorovMinimumWeightPerfectMatching.DEBUG) {
+        if (DEBUG) {
             for (Node root = state.nodes[state.nodeNum].treeSiblingNext; root != null; root = root.treeSiblingNext) {
                 System.out.println("Updating duals: now eps of " + root.tree + " is " + (root.tree.eps));
             }
@@ -167,7 +168,7 @@ class DualUpdater<V, E> {
         if (eps > tree.eps) {
             delta = eps - tree.eps;
             tree.eps = eps;
-            if (KolmogorovMinimumWeightPerfectMatching.DEBUG) {
+            if (DEBUG) {
                 System.out.println("Updating duals: now eps of " + tree + " is " + eps);
             }
         }
@@ -189,6 +190,9 @@ class DualUpdater<V, E> {
      * the {@link DualUpdater#multipleTreeFixedDelta()} approach can fail.
      */
     private void updateDualsConnectedComponents() {
+        if(DEBUG){
+            System.out.println("Updating via connected components");
+        }
         Node root;
         Tree startTree;
         Tree currentTree;
@@ -298,7 +302,7 @@ class DualUpdater<V, E> {
      * can fail if there are circular constraints on (+, -) cross-tree edges.
      */
     private void multipleTreeFixedDelta() {
-        if (KolmogorovMinimumWeightPerfectMatching.DEBUG) {
+        if (DEBUG) {
             System.out.println("Multiple tree fixed delta approach");
         }
         Edge varEdge;

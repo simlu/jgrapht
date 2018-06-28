@@ -125,14 +125,14 @@ class Edge {
     public double getTrueSlack() {
         double result = slack;
 
-        if (head[0].tree != null) {
+        if (!head[0].isInfinityNode()) {
             if (head[0].isPlusNode()) {
                 result -= head[0].tree.eps;
             } else {
                 result += head[0].tree.eps;
             }
         }
-        if (head[1].tree != null) {
+        if (!head[1].isInfinityNode()) {
             if (head[1].isPlusNode()) {
                 result -= head[1].tree.eps;
             } else {

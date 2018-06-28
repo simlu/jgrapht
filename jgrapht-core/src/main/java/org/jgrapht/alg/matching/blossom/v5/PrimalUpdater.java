@@ -20,7 +20,6 @@ package org.jgrapht.alg.matching.blossom.v5;
 import org.jgrapht.alg.util.Pair;
 import org.jgrapht.util.FibonacciHeap;
 
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -638,7 +637,9 @@ class PrimalUpdater<V, E> {
      * applies lazy delta spreading, updates edges' presence in the heaps. This method also deletes unnecessary
      * tree edges.
      * <p>
-     * This method doesn't change the nodes and edge contracted in the blossoms.
+     * This method doesn't change the nodes and edges contracted in the blossoms. This method also doesn't destroy
+     * the tree structure. Therefore, when free edges are grown, their tree structure data should be completely
+     * updated
      *
      * @param firstNode   an endpoint of the {@code augmentEdge} which belongs to the tree to augment
      * @param augmentEdge a tight (+, +) cross tree edge
@@ -714,6 +715,7 @@ class PrimalUpdater<V, E> {
         }
 
         // updating matching
+        // here we rely on the fact that after initialization all unmatched nodes have parentEdge == null
         Edge matchedEdge = augmentEdge;
         Node plusNode = firstNode;
         Node minusNode = plusNode.getTreeParent();

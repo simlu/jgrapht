@@ -233,7 +233,7 @@ public class KolmogorovMinimumWeightPerfectMatchingTest {
     /**
      * Test on a $K_{5}$ with a dummy edge (1,6)
      */
-    @Test
+    @Test(timeout = 1000)
     public void testGetMatching10() {
         Graph<Integer, DefaultWeightedEdge> graph = new DefaultUndirectedWeightedGraph<>(DefaultWeightedEdge.class);
         int[][] edges = new int[][]{{1, 2, 4}, {1, 3, 4}, {1, 4, 6}, {1, 5, 8}, {2, 3, 8}, {2, 4, 10}, {2, 5, 8},
